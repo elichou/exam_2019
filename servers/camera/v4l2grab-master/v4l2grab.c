@@ -29,6 +29,7 @@
  *      Added ability to change frame interval (ie. frame rate/fps)        *
  * Martin Savc              7JUL2015
  *      Added support for continuous capture using SIGINT to stop.
+ * Elias Aoun Durand 29JAN2019
  ***************************************************************************/
 
 // compile with all three access methods
@@ -112,7 +113,7 @@ static char* deviceName = "/dev/video0";
 
 static const char* const continuousFilenameFmt = "%s_%010"PRIu32"_%"PRId64".jpg";
 
-static unsigned int ADDR;
+static unsigned int ADDR = 172201172;
 static unsigned int PORT_SEND = 15556;
 static unsigned int PORT_RECV = 15555;
 
