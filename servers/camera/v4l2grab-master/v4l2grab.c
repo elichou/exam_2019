@@ -113,7 +113,7 @@ static char* deviceName = "/dev/video0";
 
 static const char* const continuousFilenameFmt = "%s_%010"PRIu32"_%"PRId64".jpg";
 
-static unsigned int ADDR = 172201172;
+static unsigned int ADDR = 1722021164;
 static unsigned int PORT_SEND = 15556;
 static unsigned int PORT_RECV = 15555;
 
@@ -1037,19 +1037,22 @@ int main(int argc, char **argv)
       // process frames and send to server
       mainLoop(clintConnt_send);
 
-      // stop capturing and close sockets
+      // stop capturing
       captureStop();
-      close(clintConnt_send);
-      close(clintConnt_rcv);
-
-      // close device
-      deviceUninit();
-      deviceClose();
     }
+  }
 
-    if(jpegFilenamePart != 0){
-      free(jpegFilename);
-    }
+  // close sockets
+  close(clintConnt_send);
+  close(clintConnt_rcv);
+
+  // close device
+  deviceUninit();
+  deviceClose();
+
+  if(jpegFilenamePart != 0)
+  {
+    free(jpegFilename);
   }
 
 	exit(EXIT_SUCCESS);
