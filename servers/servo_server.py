@@ -12,7 +12,8 @@ port = 15554
 
 buffer_size = 256
 
-serverSocket.bind((host, port))
+
+
 
 #Initialisation du Servo-Moteur
 GPIO.cleanup()
@@ -35,12 +36,20 @@ signal.signal(signal.SIGINT, close)
 signal.signal(signal.SIGTERM, close)
 signal.signal(signal.SIGQUIT, close)
 signal.signal(signal.SIGTSTP, close)
+signal.signal(signal.SIGERR, close)
 
 #######---MAIN---#######
 if __name__=='__main__':
 
+    try:
+        serverSocket.bind((host, port))
+    except socket.error as msg:
+        print 'Bind fail : ' +str(msg[0]) + 'MESSAGE= '+ msg[1]
+        sys.exit()
+
+
     while True:
-        serverSocket.listen(256)
+        serverSocket.listen(10)
     	clientSocket, address = serverSocket.accept()
     	angle = clientSocket.recv(buffer_size)
         angle = angle.decode()
@@ -50,5 +59,5 @@ if __name__=='__main__':
             p.ChangeDutyCycle(angle)
             time.sleep(0.5)
         except:
-            p.stop()
-            GPIO.cleanup()
+            print 'Change Duty cycle FAIL'
+            sys.exit()
