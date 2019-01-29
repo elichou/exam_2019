@@ -31,12 +31,12 @@ def close(signal, frame):
     #close and clean gpio
     p.stop()
     GPIO.cleanup()
+    print 'SIG:'+ signal + 'Program Interupted'
 
 signal.signal(signal.SIGINT, close)
 signal.signal(signal.SIGTERM, close)
 signal.signal(signal.SIGQUIT, close)
 signal.signal(signal.SIGTSTP, close)
-signal.signal(signal.SIGERR, close)
 
 #######---MAIN---#######
 if __name__=='__main__':
