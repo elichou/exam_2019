@@ -21,7 +21,7 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
- 
+
  /**************************************************************************
  *   Modification History                                                  *
  *                                                                         *
@@ -49,6 +49,7 @@
 #include <malloc.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/time.h>
 #include <time.h>
 #include <sys/mman.h>
@@ -60,6 +61,8 @@
 #include <signal.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
 #include "config.h"
 #include "yuv.h"
@@ -103,11 +106,41 @@ static unsigned int height = 480;
 static unsigned int fps = 30;
 static int continuous = 0;
 static unsigned char jpegQuality = 70;
-static char* jpegFilename = NULL;
+static char* jpegFilename = "/var/image.jpeg";
 static char* jpegFilenamePart = NULL;
 static char* deviceName = "/dev/video0";
 
 static const char* const continuousFilenameFmt = "%s_%010"PRIu32"_%"PRId64".jpg";
+
+static unsigned int ADDR;
+static unsigned int PORT_SEND = 15556;
+static unsigned int PORT_RECV = 15555;
+
+int init_server(int PORT)
+{
+  int clintListn = 0, clintConnt = 0;
+  struct sockaddr_in ipOfServer;
+  clintListn = socket(AF_INET, SOCK_STREAM, 0); // connection oriented TCP protocol
+
+  // memset(&ipOfServer, '0', sizeof(ipOfServer)); // fills the struct with zeros
+  // memset(dataSending, '0', sizeof(dataSending)); // fills the variable with zeros
+  ipOfServer.sin_family = AF_INET; // designation of the adress type for communication ipV4
+  ipOfServer.sin_addr.s_addr = htonl(ADDR); // convertion to address byte order
+  ipOfServer.sin_port = htons(PORT); // convertion to address byte order
+
+  bind(clintListn, (struct sockaddr*)&ipOfServer, sizeof(ipOfServer));
+  listen(clintListn, 20);
+
+  while(1)
+  {
+    printf("Waiting for connection on port %d...\n", PORT);
+    clintConnt = accept(clintListn, (struct sockaddr*)NULL, NULL); // accept connexion with client
+    printf("Connection established on port %d...\n", PORT);
+
+  }
+
+  return clintConnt;
+}
 
 /**
 SIGINT interput handler
@@ -120,7 +153,7 @@ void StopContCapture(int sig_id) {
 void InstallSIGINTHandler() {
 	struct sigaction sa;
 	CLEAR(sa);
-	
+
 	sa.sa_handler = StopContCapture;
 	if(sigaction(SIGINT, &sa, 0) != 0)
 	{
@@ -214,7 +247,7 @@ static void jpegWrite(unsigned char* img, char* jpegFilename)
 /**
 	process image read
 */
-static void imageProcess(const void* p, struct timeval timestamp)
+static void imageProcess(const void* p, struct timeval timestamp, int cli)
 {
 	//timestamp.tv_sec
 	//timestamp.tv_usec
@@ -230,8 +263,12 @@ static void imageProcess(const void* p, struct timeval timestamp)
 		sprintf(jpegFilename,continuousFilenameFmt,jpegFilenamePart,img_ind++,timestamp_long);
 
 	}
+
 	// write jpeg
-	jpegWrite(dst,jpegFilename);
+	//jpegWrite(dst,jpegFilename);
+
+  // send image via server
+  int m = write(cli, dst, sizeof(dst));
 
 	// free temporary image
 	free(dst);
@@ -240,7 +277,7 @@ static void imageProcess(const void* p, struct timeval timestamp)
 /**
 	read single frame
 */
-static int frameRead(void)
+static int frameRead(int cli)
 {
 	struct v4l2_buffer buf;
 #ifdef IO_USERPTR
@@ -270,7 +307,7 @@ static int frameRead(void)
 			timestamp.tv_sec = ts.tv_sec;
 			timestamp.tv_usec = ts.tv_nsec/1000;
 
-			imageProcess(buffers[0].start,timestamp);
+			imageProcess(buffers[0].start,timestamp, cli);
 			break;
 #endif
 
@@ -297,7 +334,7 @@ static int frameRead(void)
 
 			assert(buf.index < n_buffers);
 
-			imageProcess(buffers[buf.index].start,buf.timestamp);
+			imageProcess(buffers[buf.index].start,buf.timestamp, cli);
 
 			if (-1 == xioctl(fd, VIDIOC_QBUF, &buf))
 				errno_exit("VIDIOC_QBUF");
@@ -332,7 +369,7 @@ static int frameRead(void)
 
 				assert (i < n_buffers);
 
-				imageProcess((void *)buf.m.userptr,buf.timestamp);
+				imageProcess((void *)buf.m.userptr,buf.timestamp, cli);
 
 				if (-1 == xioctl(fd, VIDIOC_QBUF, &buf))
 					errno_exit("VIDIOC_QBUF");
@@ -346,8 +383,8 @@ static int frameRead(void)
 /**
 	mainloop: read frames and process them
 */
-static void mainLoop(void)
-{	
+static void mainLoop(int cli)
+{
 	int count;
 	unsigned int numberOfTimeouts;
 
@@ -388,7 +425,7 @@ static void mainLoop(void)
 				count = 3;
 			}
 
-			if (frameRead())
+			if (frameRead(cli))
 				break;
 
 			/* EAGAIN - continue select loop. */
@@ -739,12 +776,12 @@ static void deviceInit(void)
 		height = fmt.fmt.pix.height;
 		fprintf(stderr,"Image height set to %i by device %s.\n", height, deviceName);
 	}
-	
+
   /* If the user has set the fps to -1, don't try to set the frame interval */
   if (fps != -1)
   {
     CLEAR(frameint);
-    
+
     /* Attempt to set the frame interval. */
     frameint.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     frameint.parm.capture.timeperframe.numerator = 1;
@@ -832,7 +869,7 @@ static void usage(FILE* fp, int argc, char** argv)
 		"Options:\n"
 		"-d | --device name   Video device name [/dev/video0]\n"
 		"-h | --help          Print this message\n"
-		"-o | --output        Set JPEG output filename\n"
+		"-o | --output        JPEG outpur image is 'image'\n"
 		"-q | --quality       Set JPEG quality (0-100)\n"
 		"-m | --mmap          Use memory mapped buffers\n"
 		"-r | --read          Use read() calls\n"
@@ -891,7 +928,7 @@ int main(int argc, char **argv)
 
 			case 'o':
 				// set jpeg filename
-				jpegFilename = optarg;
+				jpegFilename = "/var/image.jpeg";
 				break;
 
 			case 'q':
@@ -935,7 +972,7 @@ int main(int argc, char **argv)
 				// set height
 				height = atoi(optarg);
 				break;
-				
+
 			case 'I':
 				// set fps
 				fps = atoi(optarg);
@@ -946,7 +983,7 @@ int main(int argc, char **argv)
 				continuous = 1;
 				InstallSIGINTHandler();
 				break;
-				
+
 
 			case 'v':
 				printf("Version: %s\n", VERSION);
@@ -965,35 +1002,54 @@ int main(int argc, char **argv)
 		usage(stdout, argc, argv);
 		exit(EXIT_FAILURE);
 	}
-	
+
 	if(continuous == 1) {
 		int max_name_len = snprintf(NULL,0,continuousFilenameFmt,jpegFilename,UINT32_MAX,INT64_MAX);
 		jpegFilenamePart = jpegFilename;
 		jpegFilename = calloc(max_name_len+1,sizeof(char));
 		strcpy(jpegFilename,jpegFilenamePart);
 	}
-	
+
 
 	// open and initialize device
 	deviceOpen();
 	deviceInit();
 
-	// start capturing
-	captureStart();
+  // init server to send images
+  int clintConnt_send = init_server(PORT_SEND);
 
-	// process frames
-	mainLoop();
+  // init server to receive signal
+  int clintConnt_rcv = init_server(PORT_RECV);
 
-	// stop capturing
-	captureStop();
+  while(1)
+  {
+    // get flagPhoto from client
+    char dataRcv[sizeof(int)];
+    int n = read(clintConnt_rcv, dataRcv, sizeof(dataRcv));
+    int flagPhoto = atoi(dataRcv);
 
-	// close device
-	deviceUninit();
-	deviceClose();
+    if (flagPhoto == 1)
+    {
+      // start capturing
+      captureStart();
 
-	if(jpegFilenamePart != 0){ 
-		free(jpegFilename);
-	}
+      // process frames and send to server
+      mainLoop(clintConnt_send);
+
+      // stop capturing and close sockets
+      captureStop();
+      close(clintConnt_send);
+      close(clintConnt_rcv);
+
+      // close device
+      deviceUninit();
+      deviceClose();
+    }
+
+    if(jpegFilenamePart != 0){
+      free(jpegFilename);
+    }
+  }
 
 	exit(EXIT_SUCCESS);
 
