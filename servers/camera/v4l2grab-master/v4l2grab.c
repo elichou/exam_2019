@@ -126,11 +126,9 @@ int init_server(int PORT)
   // memset(&ipOfServer, '0', sizeof(ipOfServer)); // fills the struct with zeros
   // memset(dataSending, '0', sizeof(dataSending)); // fills the variable with zeros
   ipOfServer.sin_family = AF_INET; // designation of the adress type for communication ipV4
-<<<<<<< HEAD:servers/camera/v4l2grab-master/v4l2grab.c
-  ipOfServer.sin_addr.s_addr = htonl(ADDR); // convertion to address byte order
-=======
+
   ipOfServer.sin_addr.s_addr = INADDR_ANY; // any address
->>>>>>> e736d6ecfa4236817f4091820060dc815d778f17:servers/camera/v4l2grab-master/v4l2grab.c
+
   ipOfServer.sin_port = htons(PORT); // convertion to address byte order
 
   bind(clintListn, (struct sockaddr*)&ipOfServer, sizeof(ipOfServer));
