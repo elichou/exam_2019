@@ -1016,7 +1016,11 @@ int main(int argc, char **argv)
 	// open and initialize device
 	deviceOpen();
 	deviceInit();
+<<<<<<< HEAD
 
+=======
+
+>>>>>>> 67238e33142daaf07987b3681c6dd5725641e731
 
   // init server to receive signal
   int clintConnt_rcv = init_server(PORT_RECV);
