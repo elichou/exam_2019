@@ -107,13 +107,13 @@ static unsigned int height = 480;
 static unsigned int fps = 30;
 static int continuous = 0;
 static unsigned char jpegQuality = 70;
-static char* jpegFilename = "/var/image.jpeg";
+static char* jpegFilename = NULL;
 static char* jpegFilenamePart = NULL;
 static char* deviceName = "/dev/video0";
 
 static const char* const continuousFilenameFmt = "%s_%010"PRIu32"_%"PRId64".jpg";
 
-static unsigned int ADDR = 1722021164;
+
 static unsigned int PORT_SEND = 15556;
 static unsigned int PORT_RECV = 15555;
 
@@ -126,11 +126,17 @@ int init_server(int PORT)
   // memset(&ipOfServer, '0', sizeof(ipOfServer)); // fills the struct with zeros
   // memset(dataSending, '0', sizeof(dataSending)); // fills the variable with zeros
   ipOfServer.sin_family = AF_INET; // designation of the adress type for communication ipV4
+<<<<<<< HEAD
 <<<<<<< HEAD:servers/camera/v4l2grab-master/v4l2grab.c
   ipOfServer.sin_addr.s_addr = htonl(ADDR); // convertion to address byte order
 =======
   ipOfServer.sin_addr.s_addr = INADDR_ANY; //htonl(ADDR); // convertion to address byte order
 >>>>>>> e736d6ecfa4236817f4091820060dc815d778f17:servers/camera/v4l2grab-master/v4l2grab.c
+=======
+
+  ipOfServer.sin_addr.s_addr = INADDR_ANY; //htonl(ADDR); // convertion to address byte order
+
+>>>>>>> dd6850e9e176fc8ddd0fff2fde6a22a7caf417e6
   ipOfServer.sin_port = htons(PORT); // convertion to address byte order
 
   bind(clintListn, (struct sockaddr*)&ipOfServer, sizeof(ipOfServer));
@@ -874,7 +880,7 @@ static void usage(FILE* fp, int argc, char** argv)
 		"Options:\n"
 		"-d | --device name   Video device name [/dev/video0]\n"
 		"-h | --help          Print this message\n"
-		"-o | --output        JPEG outpur image is 'image'\n"
+		"-o | --output        JPEG output image is 'image'\n"
 		"-q | --quality       Set JPEG quality (0-100)\n"
 		"-m | --mmap          Use memory mapped buffers\n"
 		"-r | --read          Use read() calls\n"
@@ -882,7 +888,7 @@ static void usage(FILE* fp, int argc, char** argv)
 		"-W | --width         Set image width\n"
 		"-H | --height        Set image height\n"
 		"-I | --interval      Set frame interval (fps) (-1 to skip)\n"
-		"-c | --continuous    Do continous capture, stop with SIGINT.\n"
+		"-c | --continuous    Do continuous capture, stop with SIGINT.\n"
 		"-v | --version       Print version\n"
 		"",
 		argv[0]);
@@ -933,7 +939,7 @@ int main(int argc, char **argv)
 
 			case 'o':
 				// set jpeg filename
-				jpegFilename = "/var/image.jpeg";
+				jpegFilename = optarg;
 				break;
 
 			case 'q':
@@ -1019,12 +1025,13 @@ int main(int argc, char **argv)
 	// open and initialize device
 	deviceOpen();
 	deviceInit();
-
-  // init server to send images
-  int clintConnt_send = init_server(PORT_SEND);
+	
 
   // init server to receive signal
   int clintConnt_rcv = init_server(PORT_RECV);
+
+  // init server to send images
+  int clintConnt_send = init_server(PORT_SEND);
 
   while(1)
   {
