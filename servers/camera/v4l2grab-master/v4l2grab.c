@@ -1017,12 +1017,13 @@ int main(int argc, char **argv)
 	// open and initialize device
 	deviceOpen();
 	deviceInit();
-
-  // init server to send images
-  int clintConnt_send = init_server(PORT_SEND);
+	
 
   // init server to receive signal
   int clintConnt_rcv = init_server(PORT_RECV);
+
+  // init server to send images
+  int clintConnt_send = init_server(PORT_SEND);
 
   while(1)
   {
