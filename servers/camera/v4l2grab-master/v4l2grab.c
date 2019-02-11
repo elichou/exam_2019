@@ -126,17 +126,8 @@ int init_server(int PORT)
   // memset(&ipOfServer, '0', sizeof(ipOfServer)); // fills the struct with zeros
   // memset(dataSending, '0', sizeof(dataSending)); // fills the variable with zeros
   ipOfServer.sin_family = AF_INET; // designation of the adress type for communication ipV4
-<<<<<<< HEAD
-<<<<<<< HEAD:servers/camera/v4l2grab-master/v4l2grab.c
-  ipOfServer.sin_addr.s_addr = htonl(ADDR); // convertion to address byte order
-=======
-  ipOfServer.sin_addr.s_addr = INADDR_ANY; //htonl(ADDR); // convertion to address byte order
->>>>>>> e736d6ecfa4236817f4091820060dc815d778f17:servers/camera/v4l2grab-master/v4l2grab.c
-=======
-
   ipOfServer.sin_addr.s_addr = INADDR_ANY; //htonl(ADDR); // convertion to address byte order
 
->>>>>>> dd6850e9e176fc8ddd0fff2fde6a22a7caf417e6
   ipOfServer.sin_port = htons(PORT); // convertion to address byte order
 
   bind(clintListn, (struct sockaddr*)&ipOfServer, sizeof(ipOfServer));
@@ -1025,7 +1016,7 @@ int main(int argc, char **argv)
 	// open and initialize device
 	deviceOpen();
 	deviceInit();
-	
+
 
   // init server to receive signal
   int clintConnt_rcv = init_server(PORT_RECV);
