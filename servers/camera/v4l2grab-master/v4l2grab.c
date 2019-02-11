@@ -872,7 +872,7 @@ static void usage(FILE* fp, int argc, char** argv)
 		"Options:\n"
 		"-d | --device name   Video device name [/dev/video0]\n"
 		"-h | --help          Print this message\n"
-		"-o | --output        JPEG outpur image is 'image'\n"
+		"-o | --output        JPEG output image is 'image'\n"
 		"-q | --quality       Set JPEG quality (0-100)\n"
 		"-m | --mmap          Use memory mapped buffers\n"
 		"-r | --read          Use read() calls\n"
@@ -880,7 +880,7 @@ static void usage(FILE* fp, int argc, char** argv)
 		"-W | --width         Set image width\n"
 		"-H | --height        Set image height\n"
 		"-I | --interval      Set frame interval (fps) (-1 to skip)\n"
-		"-c | --continuous    Do continous capture, stop with SIGINT.\n"
+		"-c | --continuous    Do continuous capture, stop with SIGINT.\n"
 		"-v | --version       Print version\n"
 		"",
 		argv[0]);
@@ -931,7 +931,7 @@ int main(int argc, char **argv)
 
 			case 'o':
 				// set jpeg filename
-				jpegFilename = "/var/image.jpeg";
+				jpegFilename = optarg;
 				break;
 
 			case 'q':
