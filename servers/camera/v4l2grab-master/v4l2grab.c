@@ -284,7 +284,7 @@ static void imageProcess(const void* p, struct timeval timestamp, int cli)
 	//jpegWrite(dst,jpegFilename);
 
   // send image via server
-  write(cli, dst, sizeof(dst));
+  int ret = write(cli, dst, sizeof(dst));
 
 	// free temporary image
 	free(dst);
@@ -1041,11 +1041,11 @@ int main(int argc, char **argv)
   {
     // get flagPhoto from client
     char dataRcv[sizeof(int)];
-    int n = recv(clintConnt_rcv, dataRcv, sizeof(dataRcv));
+    int n = recv(clintConnt_rcv, dataRcv, sizeof(dataRcv), 0);
     int flagPhoto = atoi(dataRcv);
 
     if (n == 0) { printf("client disconnected.");}
-    
+
     if (flagPhoto == 1)
     {
       // start capturing
